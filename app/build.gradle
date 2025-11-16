@@ -1,0 +1,130 @@
+/*
+ * Sistema de Grafos SITM-MIO
+ * Universidad ICESI - Ingeniería de Software IV
+ * 
+ * Build configuration con soporte para:
+ * - ZeroC ICE (middleware)
+ * - JavaFX (interfaz gráfica)
+ * - Generación de código Slice
+ */
+
+plugins {
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // ZeroC ICE
+    implementation 'com.zeroc:ice:3.7.10'
+    implementation 'com.zeroc:icegrid:3.7.10'
+    
+    // JavaFX (ya incluido por el plugin, pero declaramos módulos)
+    // implementation 'org.openjfx:javafx-controls:21'
+    // implementation 'org.openjfx:javafx-fxml:21'
+    // implementation 'org.openjfx:javafx-web:21'
+    
+    // CSV parsing (opcional, usamos parsing manual)
+    // implementation 'com.opencsv:opencsv:5.9'
+    
+    // Testing
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// Configuración de JavaFX
+javafx {
+    version = "21"
+    modules = ['javafx.controls', 'javafx.fxml', 'javafx.web']
+}
+
+// Configuración de Java
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+// Configuración de la aplicación
+application {
+    mainClass = 'mio.ui.MainApp'
+}
+
+// Task para compilar archivos Slice
+task compileSlice(type: Exec) {
+    description = 'Compila archivos Slice (.ice) a Java'
+    group = 'build'
+    
+    workingDir project.rootDir
+    
+    // Comando: slice2java --output-dir app/src/main/java slice/MioGraph.ice
+    commandLine 'slice2java', '--output-dir', 'app/src/main/java', 'slice/MioGraph.ice'
+    
+    doFirst {
+        println '  Compilando archivos Slice...'
+    }
+    
+    doLast {
+        println 'Archivos Slice compilados exitosamente'
+    }
+}
+
+// Hacer que compileJava dependa de compileSlice
+compileJava.dependsOn compileSlice
+
+// Task para ejecutar el servidor
+task runServer(type: JavaExec) {
+    description = 'Ejecuta el servidor ICE'
+    group = 'application'
+    
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'mio.server.MioServer'
+    workingDir = project.rootDir  // Establecer directorio raíz para acceder a config/
+    
+    doFirst {
+        println '\n'
+        println 'Iniciando Servidor ICE...'
+        println '\n'
+    }
+}
+
+// Task para ejecutar el cliente (UI)
+task runClient(type: JavaExec) {
+    description = 'Ejecuta la interfaz gráfica (cliente)'
+    group = 'application'
+    
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'mio.ui.MainApp'
+    workingDir = project.rootDir  // Establecer directorio raíz para acceder a config/
+    
+    // Agregar módulos JavaFX al runtime
+    jvmArgs = [
+        '--module-path', classpath.asPath,
+        '--add-modules', 'javafx.controls,javafx.fxml,javafx.web'
+    ]
+    
+    doFirst {
+        println '\n'
+        println '  Iniciando Cliente JavaFX...'
+        println 'n'
+    }
+}
+
+// Task para limpiar archivos generados por Slice
+task cleanSlice(type: Delete) {
+    description = 'Elimina archivos Java generados por Slice'
+    group = 'build'
+    
+    delete fileTree('app/src/main/java/Mio') {
+        include '**/*.java'
+    }
+}
+
+clean.dependsOn cleanSlice
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

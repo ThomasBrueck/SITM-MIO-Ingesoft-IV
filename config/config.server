@@ -1,0 +1,22 @@
+#
+# Configuración del Servidor ICE - Sistema MIO
+#
+
+# Configuración del adaptador de objetos
+MioAdapter.Endpoints=tcp -p 10000
+MioAdapter.AdapterId=MioAdapter
+
+# Configuración de threading
+Ice.ThreadPool.Server.Size=10
+Ice.ThreadPool.Server.SizeMax=100
+
+# Logging
+Ice.Warn.Connections=1
+Ice.Trace.Network=1
+Ice.Trace.Protocol=0
+
+# Timeouts
+Ice.Connection.IdleTimeout=60
+
+# Mensajes de advertencia
+Ice.PrintAdapterReady=1
