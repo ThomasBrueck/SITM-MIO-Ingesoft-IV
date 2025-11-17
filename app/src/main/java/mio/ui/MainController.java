@@ -1,6 +1,6 @@
 package mio.ui;
 
-import Mio.*;
+import mioice.*;
 import mio.client.MioGraphClient;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;

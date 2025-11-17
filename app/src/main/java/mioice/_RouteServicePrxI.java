@@ -13,7 +13,7 @@
 // </auto-generated>
 //
 
-package Mio;
+package mioice;
 
 /** @hidden */
 public class _RouteServicePrxI extends com.zeroc.Ice._ObjectPrxI implements RouteServicePrx

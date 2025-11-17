@@ -1,6 +1,6 @@
 package mio.client;
 
-import Mio.*;
+import mioice.*;
 import com.zeroc.Ice.Communicator;
 import com.zeroc.Ice.ObjectPrx;
 import com.zeroc.Ice.Util;

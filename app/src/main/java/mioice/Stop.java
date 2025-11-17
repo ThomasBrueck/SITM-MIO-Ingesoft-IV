@@ -13,7 +13,7 @@
 // </auto-generated>
 //
 
-package Mio;
+package mioice;
 
 /**
  * Representa una parada del sistema MIO
@@ -117,7 +117,7 @@ public class Stop implements java.lang.Cloneable,
     public int hashCode()
     {
         int h_ = 5381;
-        h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, "::Mio::Stop");
+        h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, "::mioice::Stop");
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, stopId);
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, planVersionId);
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, shortName);
@@ -220,5 +220,5 @@ public class Stop implements java.lang.Cloneable,
     private static final Stop _nullMarshalValue = new Stop();
 
     /** @hidden */
-    public static final long serialVersionUID = 628932160777851171L;
+    public static final long serialVersionUID = 4959008810046785228L;
 }

@@ -13,7 +13,7 @@
 // </auto-generated>
 //
 
-package Mio;
+package mioice;
 
 /**
  * Representa un arco entre dos paradas consecutivas
@@ -121,7 +121,7 @@ public class Arc implements java.lang.Cloneable,
     public int hashCode()
     {
         int h_ = 5381;
-        h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, "::Mio::Arc");
+        h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, "::mioice::Arc");
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, lineId);
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, lineName);
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, orientation);
@@ -224,5 +224,5 @@ public class Arc implements java.lang.Cloneable,
     private static final Arc _nullMarshalValue = new Arc();
 
     /** @hidden */
-    public static final long serialVersionUID = -8331807500093099652L;
+    public static final long serialVersionUID = 164637900415126739L;
 }

@@ -13,7 +13,7 @@
 // </auto-generated>
 //
 
-package Mio;
+package mioice;
 
 /**
  * Helper class for marshaling/unmarshaling ArcList.

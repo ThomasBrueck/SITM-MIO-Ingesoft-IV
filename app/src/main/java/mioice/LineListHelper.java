@@ -13,14 +13,14 @@
 // </auto-generated>
 //
 
-package Mio;
+package mioice;
 
 /**
- * Helper class for marshaling/unmarshaling StopList.
+ * Helper class for marshaling/unmarshaling LineList.
  **/
-public final class StopListHelper
+public final class LineListHelper
 {
-    public static void write(com.zeroc.Ice.OutputStream ostr, Stop[] v)
+    public static void write(com.zeroc.Ice.OutputStream ostr, Line[] v)
     {
         if(v == null)
         {
@@ -31,24 +31,24 @@ public final class StopListHelper
             ostr.writeSize(v.length);
             for(int i0 = 0; i0 < v.length; i0++)
             {
-                Stop.ice_write(ostr, v[i0]);
+                Line.ice_write(ostr, v[i0]);
             }
         }
     }
 
-    public static Stop[] read(com.zeroc.Ice.InputStream istr)
+    public static Line[] read(com.zeroc.Ice.InputStream istr)
     {
-        final Stop[] v;
-        final int len0 = istr.readAndCheckSeqSize(42);
-        v = new Stop[len0];
+        final Line[] v;
+        final int len0 = istr.readAndCheckSeqSize(11);
+        v = new Line[len0];
         for(int i0 = 0; i0 < len0; i0++)
         {
-            v[i0] = Stop.ice_read(istr);
+            v[i0] = Line.ice_read(istr);
         }
         return v;
     }
 
-    public static void write(com.zeroc.Ice.OutputStream ostr, int tag, java.util.Optional<Stop[]> v)
+    public static void write(com.zeroc.Ice.OutputStream ostr, int tag, java.util.Optional<Line[]> v)
     {
         if(v != null && v.isPresent())
         {
@@ -56,23 +56,23 @@ public final class StopListHelper
         }
     }
 
-    public static void write(com.zeroc.Ice.OutputStream ostr, int tag, Stop[] v)
+    public static void write(com.zeroc.Ice.OutputStream ostr, int tag, Line[] v)
     {
         if(ostr.writeOptional(tag, com.zeroc.Ice.OptionalFormat.FSize))
         {
             int pos = ostr.startSize();
-            StopListHelper.write(ostr, v);
+            LineListHelper.write(ostr, v);
             ostr.endSize(pos);
         }
     }
 
-    public static java.util.Optional<Stop[]> read(com.zeroc.Ice.InputStream istr, int tag)
+    public static java.util.Optional<Line[]> read(com.zeroc.Ice.InputStream istr, int tag)
     {
         if(istr.readOptional(tag, com.zeroc.Ice.OptionalFormat.FSize))
         {
             istr.skip(4);
-            Stop[] v;
-            v = StopListHelper.read(istr);
+            Line[] v;
+            v = LineListHelper.read(istr);
             return java.util.Optional.of(v);
         }
         else

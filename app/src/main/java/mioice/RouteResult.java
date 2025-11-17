@@ -13,7 +13,7 @@
 // </auto-generated>
 //
 
-package Mio;
+package mioice;
 
 /**
  * Representa una ruta calculada entre dos paradas
@@ -99,7 +99,7 @@ public class RouteResult implements java.lang.Cloneable,
     public int hashCode()
     {
         int h_ = 5381;
-        h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, "::Mio::RouteResult");
+        h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, "::mioice::RouteResult");
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, found);
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, stops);
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, arcs);
@@ -196,5 +196,5 @@ public class RouteResult implements java.lang.Cloneable,
     private static final RouteResult _nullMarshalValue = new RouteResult();
 
     /** @hidden */
-    public static final long serialVersionUID = 6697373899416917194L;
+    public static final long serialVersionUID = -3879681701284971675L;
 }

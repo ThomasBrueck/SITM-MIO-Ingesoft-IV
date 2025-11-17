@@ -13,7 +13,7 @@
 // </auto-generated>
 //
 
-package Mio;
+package mioice;
 
 /**
  * Servicio para consultar información del grafo completo
@@ -773,6 +773,6 @@ public interface GraphServicePrx extends com.zeroc.Ice.ObjectPrx
 
     static String ice_staticId()
     {
-        return "::Mio::GraphService";
+        return "::mioice::GraphService";
     }
 }

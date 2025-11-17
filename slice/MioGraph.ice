@@ -2,9 +2,8 @@
 // Definición Slice para el sistema de grafos SITM-MIO
 // Universidad ICESI - Ingeniería de Software IV
 
-module Mio {
+module mioice {
     
-    // ========== ESTRUCTURAS DE DATOS ==========
     
     /**
      * Representa una parada del sistema MIO
@@ -45,7 +44,6 @@ module Mio {
         double avgSpeed;        // Velocidad promedio (km/h) - inicialmente 0
     }
     
-    // ========== SECUENCIAS ==========
     
     sequence<Stop> StopList;
     sequence<Line> LineList;
@@ -64,12 +62,10 @@ module Mio {
         string message;         // Mensaje informativo (error o info)
     }
     
-    // ========== DICCIONARIOS ==========
     
     dictionary<int, Stop> StopMap;
     dictionary<int, Line> LineMap;
     
-    // ========== EXCEPCIONES ==========
     
     exception LineNotFoundException {
         int lineId;
@@ -86,7 +82,6 @@ module Mio {
         string message;
     }
     
-    // ========== SERVICIOS ==========
     
     /**
      * Servicio para consultar información de rutas

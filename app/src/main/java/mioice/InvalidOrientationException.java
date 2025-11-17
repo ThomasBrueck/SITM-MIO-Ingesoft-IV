@@ -13,7 +13,7 @@
 // </auto-generated>
 //
 
-package Mio;
+package mioice;
 
 public class InvalidOrientationException extends com.zeroc.Ice.UserException
 {
@@ -43,7 +43,7 @@ public class InvalidOrientationException extends com.zeroc.Ice.UserException
 
     public String ice_id()
     {
-        return "::Mio::InvalidOrientationException";
+        return "::mioice::InvalidOrientationException";
     }
 
     public int orientation;
@@ -54,7 +54,7 @@ public class InvalidOrientationException extends com.zeroc.Ice.UserException
     @Override
     protected void _writeImpl(com.zeroc.Ice.OutputStream ostr_)
     {
-        ostr_.startSlice("::Mio::InvalidOrientationException", -1, true);
+        ostr_.startSlice("::mioice::InvalidOrientationException", -1, true);
         ostr_.writeInt(orientation);
         ostr_.writeString(message);
         ostr_.endSlice();
@@ -71,5 +71,5 @@ public class InvalidOrientationException extends com.zeroc.Ice.UserException
     }
 
     /** @hidden */
-    public static final long serialVersionUID = -1472108865254383091L;
+    public static final long serialVersionUID = 1271522319989064034L;
 }

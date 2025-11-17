@@ -13,7 +13,7 @@
 // </auto-generated>
 //
 
-package Mio;
+package mioice;
 
 /**
  * Servicio para consultar información de rutas
@@ -719,6 +719,6 @@ public interface RouteServicePrx extends com.zeroc.Ice.ObjectPrx
 
     static String ice_staticId()
     {
-        return "::Mio::RouteService";
+        return "::mioice::RouteService";
     }
 }

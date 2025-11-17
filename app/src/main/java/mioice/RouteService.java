@@ -13,7 +13,7 @@
 // </auto-generated>
 //
 
-package Mio;
+package mioice;
 
 /**
  * Servicio para consultar información de rutas
@@ -64,7 +64,7 @@ public interface RouteService extends com.zeroc.Ice.Object
     static final String[] _iceIds =
     {
         "::Ice::Object",
-        "::Mio::RouteService"
+        "::mioice::RouteService"
     };
 
     @Override
@@ -81,7 +81,7 @@ public interface RouteService extends com.zeroc.Ice.Object
 
     static String ice_staticId()
     {
-        return "::Mio::RouteService";
+        return "::mioice::RouteService";
     }
 
     /**

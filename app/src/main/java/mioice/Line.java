@@ -13,7 +13,7 @@
 // </auto-generated>
 //
 
-package Mio;
+package mioice;
 
 /**
  * Representa una ruta del sistema MIO
@@ -100,7 +100,7 @@ public class Line implements java.lang.Cloneable,
     public int hashCode()
     {
         int h_ = 5381;
-        h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, "::Mio::Line");
+        h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, "::mioice::Line");
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, lineId);
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, planVersionId);
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, shortName);
@@ -194,5 +194,5 @@ public class Line implements java.lang.Cloneable,
     private static final Line _nullMarshalValue = new Line();
 
     /** @hidden */
-    public static final long serialVersionUID = -3033748806035140291L;
+    public static final long serialVersionUID = 2763227474759459922L;
 }

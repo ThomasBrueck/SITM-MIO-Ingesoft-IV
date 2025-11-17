@@ -13,40 +13,40 @@
 // </auto-generated>
 //
 
-package Mio;
+package mioice;
 
-public class LineNotFoundException extends com.zeroc.Ice.UserException
+public class StopNotFoundException extends com.zeroc.Ice.UserException
 {
-    public LineNotFoundException()
+    public StopNotFoundException()
     {
         this.message = "";
     }
 
-    public LineNotFoundException(Throwable cause)
+    public StopNotFoundException(Throwable cause)
     {
         super(cause);
         this.message = "";
     }
 
-    public LineNotFoundException(int lineId, String message)
+    public StopNotFoundException(int stopId, String message)
     {
-        this.lineId = lineId;
+        this.stopId = stopId;
         this.message = message;
     }
 
-    public LineNotFoundException(int lineId, String message, Throwable cause)
+    public StopNotFoundException(int stopId, String message, Throwable cause)
     {
         super(cause);
-        this.lineId = lineId;
+        this.stopId = stopId;
         this.message = message;
     }
 
     public String ice_id()
     {
-        return "::Mio::LineNotFoundException";
+        return "::mioice::StopNotFoundException";
     }
 
-    public int lineId;
+    public int stopId;
 
     public String message;
 
@@ -54,8 +54,8 @@ public class LineNotFoundException extends com.zeroc.Ice.UserException
     @Override
     protected void _writeImpl(com.zeroc.Ice.OutputStream ostr_)
     {
-        ostr_.startSlice("::Mio::LineNotFoundException", -1, true);
-        ostr_.writeInt(lineId);
+        ostr_.startSlice("::mioice::StopNotFoundException", -1, true);
+        ostr_.writeInt(stopId);
         ostr_.writeString(message);
         ostr_.endSlice();
     }
@@ -65,11 +65,11 @@ public class LineNotFoundException extends com.zeroc.Ice.UserException
     protected void _readImpl(com.zeroc.Ice.InputStream istr_)
     {
         istr_.startSlice();
-        lineId = istr_.readInt();
+        stopId = istr_.readInt();
         message = istr_.readString();
         istr_.endSlice();
     }
 
     /** @hidden */
-    public static final long serialVersionUID = -906390427942996110L;
+    public static final long serialVersionUID = -6728280436792943747L;
 }
