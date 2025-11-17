@@ -19,12 +19,28 @@ Esta aplicacion permite a los usuarios consultar rutas optimas entre paradas del
 - **Visualizacion en mapa**: Muestra la ruta calculada en un mapa interactivo usando Leaflet.
 - **Informacion detallada**: Lista completa de paradas, distancias, transbordos y lineas necesarias.
 
-## Requisitos
+## Requisitos del Sistema
 
-- Java 21 o superior
-- Gradle 8.x
-- ZeroC Ice 3.7.10
-- JavaFX 21
+### Software Requerido
+
+- **Java Development Kit (JDK) 21**
+  - Version minima: OpenJDK 21 o Oracle JDK 21
+  - Verificar instalacion: `java -version`
+
+- **Gradle 8.5**
+  - El proyecto incluye Gradle Wrapper, no es necesario instalarlo manualmente
+  - Se descargara automaticamente al ejecutar `./gradlew`
+
+### Dependencias (se descargan automaticamente)
+
+- **ZeroC Ice 3.7.10**: Middleware para comunicacion cliente-servidor
+- **JavaFX 21**: Framework para interfaz grafica
+  - Modulos: javafx-controls, javafx-fxml, javafx-web
+- **JUnit Jupiter 5.10.0**: Framework de pruebas (solo para desarrollo)
+
+### Puertos de Red
+
+- Puerto 10000: Debe estar disponible para la comunicacion Ice entre servidor y cliente
 
 ## Instrucciones de Ejecucion
 
@@ -112,11 +128,76 @@ Los datos del sistema MIO se cargan desde archivos CSV:
 - `lines-241.csv`: 105 lineas del sistema
 - `linestops-241.csv`: 7187 conexiones entre paradas
 
+## Verificacion de Instalacion
+
+Antes de ejecutar la aplicacion, verificar que Java esta correctamente instalado:
+
+```bash
+java -version
+```
+
+Deberia mostrar algo similar a:
+```
+openjdk version "21.0.x" 2024-xx-xx
+OpenJDK Runtime Environment (build 21.0.x+xx)
+OpenJDK 64-Bit Server VM (build 21.0.x+xx, mixed mode, sharing)
+```
+
+Para compilar el proyecto sin ejecutarlo:
+
+```bash
+./gradlew build
+```
+
+## Solucion de Problemas Comunes
+
+### Error: "Port 10000 already in use"
+
+El puerto 10000 esta siendo usado por otro proceso. Opciones:
+
+1. Detener el proceso que usa el puerto:
+   ```bash
+   # Linux/macOS
+   lsof -ti:10000 | xargs kill -9
+   
+   # Windows (PowerShell)
+   Get-Process -Id (Get-NetTCPConnection -LocalPort 10000).OwningProcess | Stop-Process -Force
+   ```
+
+2. O cambiar el puerto en los archivos de configuracion (`config/config.server` y `config/config.client`)
+
+### Error: "java: invalid target release: 21"
+
+La version de Java instalada es inferior a Java 21. Instalar Java 21 o superior.
+
+### Error: "Module javafx.controls not found"
+
+JavaFX no se descargo correctamente. Ejecutar:
+
+```bash
+./gradlew clean build --refresh-dependencies
+```
+
+### El cliente no se conecta al servidor
+
+Verificar que:
+1. El servidor esta ejecutandose (debe mostrar "SERVIDOR ICE ACTIVO")
+2. No hay firewall bloqueando el puerto 10000
+3. El archivo `config/config.client` apunta a la direccion correcta (localhost:10000 por defecto)
+
+### Error al cargar archivos CSV
+
+Verificar que los archivos CSV existen en `app/src/main/resources/data/`:
+- stops-241.csv
+- lines-241.csv
+- linestops-241.csv
+
 ## Notas Importantes
 
 - El servidor debe estar ejecutandose antes de iniciar el cliente.
 - El puerto 10000 debe estar disponible para la comunicacion Ice.
 - La primera carga de datos puede tomar unos segundos.
+- En la primera ejecucion, Gradle descargara todas las dependencias automaticamente (requiere conexion a Internet).
 
 ## Autores
 
