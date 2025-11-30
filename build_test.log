@@ -1,0 +1,23 @@
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file 'C:\Users\joshe\Desktop\SITM-MIO-Ingesoft-IV\app\build.gradle' line: 148
+
+* What went wrong:
+Could not compile build file 'C:\Users\joshe\Desktop\SITM-MIO-Ingesoft-IV\app\build.gradle'.
+> startup failed:
+  build file 'C:\Users\joshe\Desktop\SITM-MIO-Ingesoft-IV\app\build.gradle': 148: Unexpected input: '()\r\n}' @ line 148, column 1.
+     }
+     ^
+  
+  1 error
+
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1s

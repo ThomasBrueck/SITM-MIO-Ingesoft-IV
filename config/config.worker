@@ -1,0 +1,13 @@
+#
+# Configuración del Worker ICE
+#
+
+# Endpoint del worker (Puerto diferente al Master)
+WorkerAdapter.Endpoints=tcp -p 10001
+WorkerAdapter.AdapterId=WorkerAdapter
+
+# Thread pool
+Ice.ThreadPool.Server.Size=5
+Ice.ThreadPool.Server.SizeMax=10
+
+Ice.Warn.Connections=1

@@ -113,6 +113,25 @@ task runClient(type: JavaExec) {
     }
 }
 
+// Task para ejecutar un Worker
+task runWorker(type: JavaExec) {
+    description = 'Ejecuta un Worker para cálculo de rutas'
+    group = 'application'
+    
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'mio.server.worker.MioWorker'
+    workingDir = project.rootDir
+    
+    // Permitir pasar argumentos (ej: puerto)
+    if (project.hasProperty('args')) {
+        args(project.args.split(' '))
+    }
+    
+    doFirst {
+        println '\nIniciando Worker...\n'
+    }
+}
+
 // Task para limpiar archivos generados por Slice
 task cleanSlice(type: Delete) {
     description = 'Elimina archivos Java generados por Slice'
@@ -127,4 +146,18 @@ clean.dependsOn cleanSlice
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// Task para ejecutar el cliente de prueba (CLI)
+task runTestClient(type: JavaExec) {
+    description = 'Ejecuta el cliente de prueba CLI'
+    group = 'application'
+    
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'mio.client.TestClient'
+    workingDir = project.rootDir
+    
+    doFirst {
+        println '\nIniciando TestClient...\n'
+    }
 }

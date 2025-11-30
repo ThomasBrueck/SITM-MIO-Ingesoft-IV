@@ -120,9 +120,25 @@ module mioice {
     }
     
     /**
+     * Interfaz para los Workers que calculan rutas
+     */
+    interface RouteWorker {
+        /**
+         * Calcula la ruta óptima (Lógica delegada por el Master)
+         */
+        RouteResult findRoute(int originStopId, int destStopId)
+            throws StopNotFoundException;
+    }
+
+    /**
      * Servicio para consultar información del grafo completo
      */
     interface GraphService {
+        /**
+         * Registra un nuevo worker en el sistema (Opcional para descubrimiento dinámico)
+         */
+        void registerWorker(string proxy);
+
         /**
          * Obtiene todas las paradas del sistema
          */

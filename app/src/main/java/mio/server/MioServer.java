@@ -27,19 +27,21 @@ public class MioServer {
             // Inicializar comunicador ICE
             communicator = Util.initialize(args, "config/config.server");
             
+            // Inicializar Repositorios (Patrón Repository)
+            System.out.println("Inicializando repositorios...");
+            mio.server.repository.StopRepository stopRepo = mio.server.repository.RepositoryFactory.createStopRepository("CSV", "data/stops-241.csv");
+            mio.server.repository.LineRepository lineRepo = mio.server.repository.RepositoryFactory.createLineRepository("CSV", "data/lines-241.csv");
+            mio.server.repository.LineStopRepository lineStopRepo = mio.server.repository.RepositoryFactory.createLineStopRepository("CSV", "data/linestops-241.csv");
+            
             // Cargar datos y construir grafo
             System.out.println("Inicializando servidor...\n");
-            GraphBuilder graphBuilder = new GraphBuilder();
+            GraphBuilder graphBuilder = new GraphBuilder(stopRepo, lineRepo, lineStopRepo);
             
             try {
-                // Intentar cargar desde recursos
-                graphBuilder.loadData(
-                    "data/lines-241.csv",
-                    "data/stops-241.csv",
-                    "data/linestops-241.csv"
-                );
-            } catch (IOException e) {
-                System.err.println("Error cargando archivos CSV: " + e.getMessage());
+                // Cargar datos usando los repositorios inyectados
+                graphBuilder.loadData();
+            } catch (Exception e) {
+                System.err.println("Error cargando datos: " + e.getMessage());
                 status = 1;
                 return;
             }

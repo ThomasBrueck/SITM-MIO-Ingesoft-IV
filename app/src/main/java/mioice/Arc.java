@@ -224,5 +224,5 @@ public class Arc implements java.lang.Cloneable,
     private static final Arc _nullMarshalValue = new Arc();
 
     /** @hidden */
-    public static final long serialVersionUID = 164637900415126739L;
+    public static final long serialVersionUID = 1389317331L;
 }

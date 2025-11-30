@@ -21,6 +21,58 @@ package mioice;
 public interface GraphServicePrx extends com.zeroc.Ice.ObjectPrx
 {
     /**
+     * Registra un nuevo worker en el sistema (Opcional para descubrimiento dinámico)
+     **/
+    default void registerWorker(String proxy)
+    {
+        registerWorker(proxy, com.zeroc.Ice.ObjectPrx.noExplicitContext);
+    }
+
+    /**
+     * Registra un nuevo worker en el sistema (Opcional para descubrimiento dinámico)
+     * @param context The Context map to send with the invocation.
+     **/
+    default void registerWorker(String proxy, java.util.Map<String, String> context)
+    {
+        _iceI_registerWorkerAsync(proxy, context, true).waitForResponse();
+    }
+
+    /**
+     * Registra un nuevo worker en el sistema (Opcional para descubrimiento dinámico)
+     * @return A future that will be completed when the invocation completes.
+     **/
+    default java.util.concurrent.CompletableFuture<Void> registerWorkerAsync(String proxy)
+    {
+        return _iceI_registerWorkerAsync(proxy, com.zeroc.Ice.ObjectPrx.noExplicitContext, false);
+    }
+
+    /**
+     * Registra un nuevo worker en el sistema (Opcional para descubrimiento dinámico)
+     * @param context The Context map to send with the invocation.
+     * @return A future that will be completed when the invocation completes.
+     **/
+    default java.util.concurrent.CompletableFuture<Void> registerWorkerAsync(String proxy, java.util.Map<String, String> context)
+    {
+        return _iceI_registerWorkerAsync(proxy, context, false);
+    }
+
+    /**
+     * @hidden
+     * @param iceP_proxy -
+     * @param context -
+     * @param sync -
+     * @return -
+     **/
+    default com.zeroc.IceInternal.OutgoingAsync<Void> _iceI_registerWorkerAsync(String iceP_proxy, java.util.Map<String, String> context, boolean sync)
+    {
+        com.zeroc.IceInternal.OutgoingAsync<Void> f = new com.zeroc.IceInternal.OutgoingAsync<>(this, "registerWorker", null, sync, null);
+        f.invoke(false, context, null, ostr -> {
+                     ostr.writeString(iceP_proxy);
+                 }, null);
+        return f;
+    }
+
+    /**
      * Obtiene todas las paradas del sistema
      **/
     default Stop[] getAllStops()

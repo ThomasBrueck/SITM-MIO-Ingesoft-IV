@@ -5,17 +5,42 @@ import mio.server.data.GraphBuilder;
 import com.zeroc.Ice.Current;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Implementación del servicio GraphService
- * Proporciona métodos para consultar información del grafo completo
+ * Implementación del servicio GraphService (MASTER)
+ * Delega el cálculo de rutas a los Workers registrados
  */
 public class GraphServiceI implements GraphService {
     
     private GraphBuilder graphBuilder;
+    private List<RouteWorkerPrx> workers;
+    private AtomicInteger nextWorkerIndex;
     
     public GraphServiceI(GraphBuilder graphBuilder) {
         this.graphBuilder = graphBuilder;
+        this.workers = new ArrayList<>();
+        this.nextWorkerIndex = new AtomicInteger(0);
+    }
+    
+    public void addWorker(RouteWorkerPrx worker) {
+        synchronized(workers) {
+            workers.add(worker);
+        }
+        System.out.println("MASTER: Worker agregado manualmente -> " + worker);
+    }
+    
+    @Override
+    public void registerWorker(String proxy, Current current) {
+        try {
+            com.zeroc.Ice.ObjectPrx base = current.adapter.getCommunicator().stringToProxy(proxy);
+            RouteWorkerPrx worker = RouteWorkerPrx.checkedCast(base);
+            if (worker != null) {
+                addWorker(worker);
+            }
+        } catch (Exception e) {
+            System.err.println("MASTER: Error registrando worker " + proxy + ": " + e.getMessage());
+        }
     }
     
     @Override
@@ -28,14 +53,9 @@ public class GraphServiceI implements GraphService {
     @Override
     public Arc[] getAllArcs(Current current) {
         List<Arc> arcs = new ArrayList<>(graphBuilder.getAllArcs());
-        // Ordenar por lineId, luego por orientation, luego por sequence
         arcs.sort((a, b) -> {
-            if (a.lineId != b.lineId) {
-                return Integer.compare(a.lineId, b.lineId);
-            }
-            if (a.orientation != b.orientation) {
-                return Integer.compare(a.orientation, b.orientation);
-            }
+            if (a.lineId != b.lineId) return Integer.compare(a.lineId, b.lineId);
+            if (a.orientation != b.orientation) return Integer.compare(a.orientation, b.orientation);
             return Integer.compare(a.sequenceNum, b.sequenceNum);
         });
         return arcs.toArray(new Arc[0]);
@@ -43,7 +63,6 @@ public class GraphServiceI implements GraphService {
     
     @Override
     public Arc[] getArcsByRouteAndOrientation(Current current) {
-        // Este método retorna los arcos ordenados por ruta y orientación
         return getAllArcs(current);
     }
     
@@ -53,16 +72,12 @@ public class GraphServiceI implements GraphService {
         int numStops = graphBuilder.getStopsMap().size();
         int numArcs = graphBuilder.getAllArcs().size();
         
-        // Contar arcos por orientación
         int numArcsOrientation0 = 0;
         int numArcsOrientation1 = 0;
         
         for (Arc arc : graphBuilder.getAllArcs()) {
-            if (arc.orientation == 0) {
-                numArcsOrientation0++;
-            } else {
-                numArcsOrientation1++;
-            }
+            if (arc.orientation == 0) numArcsOrientation0++;
+            else numArcsOrientation1++;
         }
         
         return new int[] {numRoutes, numStops, numArcs, numArcsOrientation0, numArcsOrientation1};
@@ -78,7 +93,41 @@ public class GraphServiceI implements GraphService {
     public RouteResult findRoute(int originStopId, int destStopId, Current current) 
             throws StopNotFoundException {
         
-        // Validar que las paradas existen antes de buscar
+        System.out.println("\nMASTER: Solicitud de ruta recibida (" + originStopId + " -> " + destStopId + ")");
+        
+        // Obtener un worker disponible (Round Robin)
+        RouteWorkerPrx worker = getNextWorker();
+        
+        if (worker == null) {
+            System.err.println("MASTER: No hay workers disponibles. Ejecutando localmente (Fallback)...");
+            // Fallback: Ejecutar localmente si no hay workers
+            return executeLocally(originStopId, destStopId);
+        }
+        
+        try {
+            System.out.println("MASTER: Delegando tarea a Worker...");
+            return worker.findRoute(originStopId, destStopId);
+        } catch (com.zeroc.Ice.ConnectionRefusedException | com.zeroc.Ice.TimeoutException e) {
+            System.err.println("MASTER: Error de conexión con Worker: " + e.getMessage());
+            System.out.println("MASTER: Worker no disponible. Reintentando localmente...");
+            return executeLocally(originStopId, destStopId);
+        } catch (Exception e) {
+            System.err.println("MASTER: Error inesperado en Worker: " + e.getMessage());
+            e.printStackTrace();
+            throw e; // Relanzar otras excepciones (ej: StopNotFoundException si viniera del worker)
+        }
+    }
+    
+    private RouteWorkerPrx getNextWorker() {
+        synchronized(workers) {
+            if (workers.isEmpty()) return null;
+            int index = nextWorkerIndex.getAndIncrement() % workers.size();
+            return workers.get(index);
+        }
+    }
+    
+    private RouteResult executeLocally(int originStopId, int destStopId) throws StopNotFoundException {
+        // Lógica original para fallback
         if (!graphBuilder.getStopsMap().containsKey(originStopId)) {
             StopNotFoundException ex = new StopNotFoundException();
             ex.stopId = originStopId;
@@ -93,10 +142,8 @@ public class GraphServiceI implements GraphService {
             throw ex;
         }
         
-        // Llamar al algoritmo de búsqueda
         Map<String, Object> searchResult = graphBuilder.findShortestRoute(originStopId, destStopId);
         
-        // Convertir el resultado a la estructura RouteResult de ICE
         RouteResult result = new RouteResult();
         result.found = (Boolean) searchResult.get("found");
         result.message = (String) searchResult.get("message");
@@ -111,19 +158,6 @@ public class GraphServiceI implements GraphService {
         List<Arc> arcs = (List<Arc>) searchResult.get("arcs");
         result.arcs = arcs.toArray(new Arc[0]);
         
-        // Log en el servidor
-        System.out.println("\nBÚSQUEDA DE RUTA SOLICITADA");
-        System.out.printf("Origen:  %s (ID: %d)%n", 
-                         graphBuilder.getStopsMap().get(originStopId).shortName, originStopId);
-        System.out.printf("Destino: %s (ID: %d)%n", 
-                         graphBuilder.getStopsMap().get(destStopId).shortName, destStopId);
-        if (result.found) {
-            System.out.printf("Ruta encontrada: %d paradas, %.2f km, %d transbordos%n", 
-                             result.stops.length, result.totalDistance, result.numTransfers);
-        } else {
-            System.out.println("No se encontró ruta");
-        }
-        
         return result;
     }
     
@@ -131,7 +165,9 @@ public class GraphServiceI implements GraphService {
     public int[] getReachableStops(int originStopId, Current current) 
             throws StopNotFoundException {
         
-        // Validar que la parada existe
+        // Esta operación es ligera, la mantenemos en el Master por ahora
+        // O podríamos delegarla también si quisiéramos
+        
         if (!graphBuilder.getStopsMap().containsKey(originStopId)) {
             StopNotFoundException ex = new StopNotFoundException();
             ex.stopId = originStopId;
@@ -139,22 +175,13 @@ public class GraphServiceI implements GraphService {
             throw ex;
         }
         
-        // Obtener paradas alcanzables
         Set<Integer> reachableSet = graphBuilder.findReachableStops(originStopId);
         
-        // Convertir Set a array de int
         int[] reachableArray = new int[reachableSet.size()];
         int i = 0;
         for (Integer stopId : reachableSet) {
             reachableArray[i++] = stopId;
         }
-        
-        // Log en el servidor
-        System.out.println("\nCÁLCULO DE ALCANZABILIDAD SOLICITADO");
-        System.out.printf("Origen: %s (ID: %d)%n", 
-                         graphBuilder.getStopsMap().get(originStopId).shortName, originStopId);
-        System.out.printf("Paradas alcanzables: %d de %d total%n", 
-                         reachableSet.size(), graphBuilder.getStopsMap().size());
         
         return reachableArray;
     }

@@ -21,6 +21,12 @@ package mioice;
 public interface GraphService extends com.zeroc.Ice.Object
 {
     /**
+     * Registra un nuevo worker en el sistema (Opcional para descubrimiento dinámico)
+     * @param current The Current object for the invocation.
+     **/
+    void registerWorker(String proxy, com.zeroc.Ice.Current current);
+
+    /**
      * Obtiene todas las paradas del sistema
      * @param current The Current object for the invocation.
      **/
@@ -94,6 +100,24 @@ public interface GraphService extends com.zeroc.Ice.Object
     static String ice_staticId()
     {
         return "::mioice::GraphService";
+    }
+
+    /**
+     * @hidden
+     * @param obj -
+     * @param inS -
+     * @param current -
+     * @return -
+    **/
+    static java.util.concurrent.CompletionStage<com.zeroc.Ice.OutputStream> _iceD_registerWorker(GraphService obj, final com.zeroc.IceInternal.Incoming inS, com.zeroc.Ice.Current current)
+    {
+        com.zeroc.Ice.Object._iceCheckMode(null, current.mode);
+        com.zeroc.Ice.InputStream istr = inS.startReadParams();
+        String iceP_proxy;
+        iceP_proxy = istr.readString();
+        inS.endReadParams();
+        obj.registerWorker(iceP_proxy, current);
+        return inS.setResult(inS.writeEmptyParams());
     }
 
     /**
@@ -244,7 +268,8 @@ public interface GraphService extends com.zeroc.Ice.Object
         "ice_ids",
         "ice_isA",
         "ice_ping",
-        "printArcsToConsole"
+        "printArcsToConsole",
+        "registerWorker"
     };
 
     /** @hidden */
@@ -303,6 +328,10 @@ public interface GraphService extends com.zeroc.Ice.Object
             case 10:
             {
                 return _iceD_printArcsToConsole(this, in, current);
+            }
+            case 11:
+            {
+                return _iceD_registerWorker(this, in, current);
             }
         }
 

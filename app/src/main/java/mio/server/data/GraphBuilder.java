@@ -2,6 +2,10 @@ package mio.server.data;
 
 import mioice.*;
 import mio.server.model.*;
+import mio.server.repository.*;
+import mio.server.data.CSVReader; // Explicit import if needed, though it's in same package? No, CSVReader is in mio.server.data, GraphBuilder is in mio.server.data. Wait.
+// GraphBuilder is in mio.server.data. CSVReader is in mio.server.data.
+// Repositories are in mio.server.repository.
 
 import java.io.IOException;
 import java.util.*;
@@ -13,59 +17,75 @@ import java.util.stream.Collectors;
  */
 public class GraphBuilder {
 
+    private StopRepository stopRepository;
+    private LineRepository lineRepository;
+    private LineStopRepository lineStopRepository;
+
     private Map<Integer, Stop> stopsMap;
     private Map<Integer, Line> linesMap;
     private List<Arc> allArcs;
     private Map<String, List<Arc>> arcsByLineAndOrientation;
 
-    public GraphBuilder() {
+    public GraphBuilder(StopRepository stopRepository, LineRepository lineRepository, LineStopRepository lineStopRepository) {
+        this.stopRepository = stopRepository;
+        this.lineRepository = lineRepository;
+        this.lineStopRepository = lineStopRepository;
+        
         this.stopsMap = new HashMap<>();
         this.linesMap = new HashMap<>();
         this.allArcs = new ArrayList<>();
         this.arcsByLineAndOrientation = new HashMap<>();
     }
+    
+    // Constructor vacío para compatibilidad temporal o tests
+    public GraphBuilder() {
+        this(null, null, null);
+    }
 
     /**
-     * Carga los datos desde los archivos CSV
+     * Carga los datos usando los repositorios configurados
      */
-    public void loadData(String linesPath, String stopsPath, String lineStopsPath) throws IOException {
-        System.out.println("SISTEMA DE GRAFOS SITM-MIO - Cargando datos...");
+    public void loadData() {
+        System.out.println("SISTEMA DE GRAFOS SITM-MIO - Cargando datos desde Repositorios...");
 
-        // 1. Leer paradas
-        List<StopData> stops = CSVReader.readStops(stopsPath);
-        for (StopData sd : stops) {
-            Stop stop = new Stop();
-            stop.stopId = sd.getStopId();
-            stop.planVersionId = sd.getPlanVersionId();
-            stop.shortName = sd.getShortName();
-            stop.longName = sd.getLongName();
-            stop.gpsX = sd.getGpsX();
-            stop.gpsY = sd.getGpsY();
-            stop.decimalLong = sd.getDecimalLong();
-            stop.decimalLat = sd.getDecimalLat();
+        if (stopRepository == null || lineRepository == null || lineStopRepository == null) {
+            throw new IllegalStateException("Repositorios no inicializados en GraphBuilder");
+        }
+
+        // 1. Leer paradas desde repositorio
+        List<Stop> stops = stopRepository.findAll();
+        for (Stop stop : stops) {
             stopsMap.put(stop.stopId, stop);
         }
 
-        // 2. Leer rutas
-        List<LineData> lines = CSVReader.readLines(linesPath);
-        for (LineData ld : lines) {
-            Line line = new Line();
-            line.lineId = ld.getLineId();
-            line.planVersionId = ld.getPlanVersionId();
-            line.shortName = ld.getShortName();
-            line.description = ld.getDescription();
-            line.activationDate = ld.getActivationDate();
+        // 2. Leer rutas desde repositorio
+        List<Line> lines = lineRepository.findAll();
+        for (Line line : lines) {
             linesMap.put(line.lineId, line);
         }
 
-        // 3. Leer relaciones y construir arcos
-        List<LineStopData> lineStops = CSVReader.readLineStops(lineStopsPath);
+        // 3. Leer relaciones y construir arcos desde repositorio
+        List<LineStopData> lineStops = lineStopRepository.findAll();
         buildArcs(lineStops);
 
         System.out.println("Datos cargados exitosamente:");
         System.out.println("Rutas: " + String.format("%-51d", linesMap.size()));
         System.out.println("Paradas: " + String.format("%-49d", stopsMap.size()));
         System.out.println("Arcos totales: " + String.format("%-44d", allArcs.size()));
+    }
+    
+    /**
+     * Deprecated: Use loadData() without arguments after injecting repositories
+     */
+    @Deprecated
+    public void loadData(String linesPath, String stopsPath, String lineStopsPath) throws IOException {
+        // Adaptador para mantener compatibilidad si se llama al método antiguo
+        // pero idealmente debería usarse el nuevo flujo
+        System.out.println("WARNING: Usando método deprecated loadData(paths).");
+        this.stopRepository = mio.server.repository.RepositoryFactory.createStopRepository("CSV", stopsPath);
+        this.lineRepository = mio.server.repository.RepositoryFactory.createLineRepository("CSV", linesPath);
+        this.lineStopRepository = mio.server.repository.RepositoryFactory.createLineStopRepository("CSV", lineStopsPath);
+        loadData();
     }
 
     /**
@@ -277,164 +297,28 @@ public class GraphBuilder {
      * @param destStopId   ID de la parada de destino
      * @return Mapa con información de la ruta encontrada
      */
+    /**
+     * Encuentra la ruta más corta entre dos paradas usando BFS
+     * (Delegado a PathFinder)
+     */
     public Map<String, Object> findShortestRoute(int originStopId, int destStopId) {
-        Map<String, Object> result = new HashMap<>();
-
-        // Validar que las paradas existen
-        if (!stopsMap.containsKey(originStopId)) {
-            result.put("found", false);
-            result.put("message", "Parada de origen no encontrada: " + originStopId);
-            return result;
-        }
-
-        if (!stopsMap.containsKey(destStopId)) {
-            result.put("found", false);
-            result.put("message", "Parada de destino no encontrada: " + destStopId);
-            return result;
-        }
-
-        // Caso especial: origen = destino
-        if (originStopId == destStopId) {
-            result.put("found", true);
-            result.put("stops", new ArrayList<>(Arrays.asList(stopsMap.get(originStopId))));
-            result.put("arcs", new ArrayList<>());
-            result.put("totalDistance", 0.0);
-            result.put("numTransfers", 0);
-            result.put("message", "Origen y destino son la misma parada");
-            return result;
-        }
-
-        // BFS para encontrar el camino más corto
-        Queue<Integer> queue = new LinkedList<>();
-        Map<Integer, Integer> parent = new HashMap<>(); // Para reconstruir el camino
-        Map<Integer, Arc> arcToParent = new HashMap<>(); // Arco usado para llegar a cada nodo
-        Set<Integer> visited = new HashSet<>();
-
-        queue.add(originStopId);
-        visited.add(originStopId);
-        parent.put(originStopId, null);
-
-        boolean found = false;
-
-        // BFS
-        while (!queue.isEmpty() && !found) {
-            int currentStopId = queue.poll();
-
-            // Buscar todos los arcos que salen de esta parada
-            for (Arc arc : allArcs) {
-                if (arc.fromStop.stopId == currentStopId) {
-                    int nextStopId = arc.toStop.stopId;
-
-                    if (!visited.contains(nextStopId)) {
-                        visited.add(nextStopId);
-                        parent.put(nextStopId, currentStopId);
-                        arcToParent.put(nextStopId, arc);
-                        queue.add(nextStopId);
-
-                        // ¿Llegamos al destino?
-                        if (nextStopId == destStopId) {
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Construir resultado
-        if (!found) {
-            result.put("found", false);
-            result.put("message", "No se encontró ruta entre las paradas " + originStopId + " y " + destStopId);
-            result.put("stops", new ArrayList<>());
-            result.put("arcs", new ArrayList<>());
-            result.put("totalDistance", 0.0);
-            result.put("numTransfers", 0);
-            return result;
-        }
-
-        // Reconstruir el camino desde destino hasta origen
-        List<Integer> pathStopIds = new ArrayList<>();
-        List<Arc> pathArcs = new ArrayList<>();
-        int current = destStopId;
-
-        while (current != originStopId) {
-            pathStopIds.add(0, current);
-            Arc arc = arcToParent.get(current);
-            if (arc != null) {
-                pathArcs.add(0, arc);
-            }
-            current = parent.get(current);
-        }
-        pathStopIds.add(0, originStopId);
-
-        // Convertir IDs a objetos Stop
-        List<Stop> pathStops = new ArrayList<>();
-        for (int stopId : pathStopIds) {
-            pathStops.add(stopsMap.get(stopId));
-        }
-
-        // Calcular distancia total
-        double totalDistance = 0.0;
-        for (Arc arc : pathArcs) {
-            totalDistance += arc.distance;
-        }
-
-        // Contar transbordos (cambios de línea)
-        int numTransfers = 0;
-        for (int i = 1; i < pathArcs.size(); i++) {
-            if (pathArcs.get(i).lineId != pathArcs.get(i - 1).lineId) {
-                numTransfers++;
-            }
-        }
-
-        result.put("found", true);
-        result.put("stops", pathStops);
-        result.put("arcs", pathArcs);
-        result.put("totalDistance", totalDistance);
-        result.put("numTransfers", numTransfers);
-        result.put("message", String.format("Ruta encontrada: %d paradas, %.2f km, %d transbordos",
-                pathStops.size(), totalDistance, numTransfers));
-
-        return result;
+        return mio.server.util.PathFinder.findShortestRoute(
+            originStopId, 
+            destStopId, 
+            stopsMap, 
+            allArcs
+        );
     }
-
+    
     /**
      * Encuentra todas las paradas alcanzables desde una parada de origen
-     * usando BFS (Breadth-First Search)
-     * 
-     * @param originStopId ID de la parada de origen
-     * @return Set con los IDs de todas las paradas alcanzables (incluyendo la
-     *         propia parada de origen)
+     * (Delegado a PathFinder)
      */
     public Set<Integer> findReachableStops(int originStopId) {
-        Set<Integer> reachable = new HashSet<>();
-
-        // Validar que la parada existe
-        if (!stopsMap.containsKey(originStopId)) {
-            return reachable; // Retornar conjunto vacío
-        }
-
-        // BFS para explorar todas las paradas alcanzables
-        Queue<Integer> queue = new LinkedList<>();
-        queue.add(originStopId);
-        reachable.add(originStopId);
-
-        while (!queue.isEmpty()) {
-            int currentStopId = queue.poll();
-
-            // Buscar todos los arcos que salen de esta parada
-            for (Arc arc : allArcs) {
-                if (arc.fromStop.stopId == currentStopId) {
-                    int nextStopId = arc.toStop.stopId;
-
-                    if (!reachable.contains(nextStopId)) {
-                        reachable.add(nextStopId);
-                        queue.add(nextStopId);
-                    }
-                }
-            }
-        }
-
-        return reachable;
+        return mio.server.util.PathFinder.findReachableStops(
+            originStopId, 
+            stopsMap, 
+            allArcs
+        );
     }
 }
