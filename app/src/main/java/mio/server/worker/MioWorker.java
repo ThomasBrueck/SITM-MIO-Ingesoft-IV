@@ -20,9 +20,25 @@ public class MioWorker {
         try {
             System.out.println("\nINICIANDO WORKER...");
             
+            // Parsear argumentos para encontrar el puerto
+            String port = "10001"; // Puerto por defecto
+            for (int i = 0; i < args.length; i++) {
+                if ("--port".equals(args[i]) && i + 1 < args.length) {
+                    port = args[i + 1];
+                }
+            }
+            
+            System.out.println("Configurando Worker en puerto: " + port);
+
+            // Configuración inicial
+            com.zeroc.Ice.InitializationData initData = new com.zeroc.Ice.InitializationData();
+            initData.properties = Util.createProperties(args);
+            initData.properties.load("config/config.worker");
+            // Sobrescribir el puerto
+            initData.properties.setProperty("WorkerAdapter.Endpoints", "tcp -p " + port);
+            
             // Inicializar comunicador ICE
-            // Usamos un archivo de config diferente o argumentos para el puerto
-            communicator = Util.initialize(args, "config/config.worker");
+            communicator = Util.initialize(args, initData);
             
             // Inicializar Repositorios
             System.out.println("Inicializando repositorios en Worker...");
@@ -41,7 +57,6 @@ public class MioWorker {
             }
             
             // Crear adaptador
-            // El nombre del adaptador y puerto deben ser configurables para lanzar múltiples workers
             ObjectAdapter adapter = communicator.createObjectAdapter("WorkerAdapter");
             
             // Crear servant
@@ -53,12 +68,37 @@ public class MioWorker {
             // Activar
             adapter.activate();
             
-            System.out.println("WORKER ACTIVO y esperando tareas...");
+            System.out.println("WORKER ACTIVO en puerto " + port);
+            
+            // REGISTRARSE CON EL MASTER
+            try {
+                System.out.println("Intentando registrarse con el Master...");
+                // Asumimos que el Master está en el puerto 10000 (config.server)
+                com.zeroc.Ice.ObjectPrx base = communicator.stringToProxy("GraphService:tcp -h localhost -p 10000");
+                mioice.GraphServicePrx master = mioice.GraphServicePrx.checkedCast(base);
+                
+                if (master == null) {
+                    throw new Error("Invalid proxy");
+                }
+                
+                // Construir el proxy de este worker para enviarlo al Master
+                String myProxy = "RouteWorker:tcp -h localhost -p " + port;
+                master.registerWorker(myProxy);
+                System.out.println("REGISTRADO EXITOSAMENTE con el Master: " + myProxy);
+                
+            } catch (Exception e) {
+                System.err.println("ADVERTENCIA: No se pudo registrar con el Master. Asegúrese de que el servidor esté corriendo.");
+                System.err.println("Error: " + e.getMessage());
+                // No salimos, el worker puede seguir corriendo y el Master podría registrarlo manualmente si tuviera esa función,
+                // o simplemente esperamos a que el Master se reinicie (aunque el registro es push).
+                // En este diseño, si falla el registro, el Master no usará este worker.
+            }
             
             communicator.waitForShutdown();
             
         } catch (Exception e) {
             System.err.println("Error en Worker: " + e);
+            e.printStackTrace();
             status = 1;
         } finally {
             if (communicator != null) {

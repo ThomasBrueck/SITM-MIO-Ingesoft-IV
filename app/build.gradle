@@ -161,3 +161,22 @@ task runTestClient(type: JavaExec) {
         println '\nIniciando TestClient...\n'
     }
 }
+
+// Task para ejecutar el Benchmark Client
+task runBenchmark(type: JavaExec) {
+    description = 'Ejecuta el cliente de Benchmark'
+    group = 'application'
+    
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'mio.client.BenchmarkClient'
+    workingDir = project.rootDir
+    
+    // Permitir pasar argumentos (archivo de datos y salida)
+    if (project.hasProperty('args')) {
+        args(project.args.split(' '))
+    }
+    
+    doFirst {
+        println '\nIniciando BenchmarkClient...\n'
+    }
+}

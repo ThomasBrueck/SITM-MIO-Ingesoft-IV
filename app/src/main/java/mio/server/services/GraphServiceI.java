@@ -93,23 +93,23 @@ public class GraphServiceI implements GraphService {
     public RouteResult findRoute(int originStopId, int destStopId, Current current) 
             throws StopNotFoundException {
         
-        System.out.println("\nMASTER: Solicitud de ruta recibida (" + originStopId + " -> " + destStopId + ")");
+        // System.out.println("\nMASTER: Solicitud de ruta recibida (" + originStopId + " -> " + destStopId + ")");
         
         // Obtener un worker disponible (Round Robin)
         RouteWorkerPrx worker = getNextWorker();
         
         if (worker == null) {
-            System.err.println("MASTER: No hay workers disponibles. Ejecutando localmente (Fallback)...");
+            // System.err.println("MASTER: No hay workers disponibles. Ejecutando localmente (Fallback)...");
             // Fallback: Ejecutar localmente si no hay workers
             return executeLocally(originStopId, destStopId);
         }
         
         try {
-            System.out.println("MASTER: Delegando tarea a Worker...");
+            // System.out.println("MASTER: Delegando tarea a Worker...");
             return worker.findRoute(originStopId, destStopId);
         } catch (com.zeroc.Ice.ConnectionRefusedException | com.zeroc.Ice.TimeoutException e) {
             System.err.println("MASTER: Error de conexión con Worker: " + e.getMessage());
-            System.out.println("MASTER: Worker no disponible. Reintentando localmente...");
+            // System.out.println("MASTER: Worker no disponible. Reintentando localmente...");
             return executeLocally(originStopId, destStopId);
         } catch (Exception e) {
             System.err.println("MASTER: Error inesperado en Worker: " + e.getMessage());

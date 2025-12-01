@@ -22,7 +22,7 @@ public class RouteWorkerI implements RouteWorker {
     public RouteResult findRoute(int originStopId, int destStopId, Current current) 
             throws StopNotFoundException {
         
-        System.out.println("Worker recibiendo tarea: " + originStopId + " -> " + destStopId);
+        // System.out.println("Worker recibiendo tarea: " + originStopId + " -> " + destStopId);
         
         // Validar que las paradas existen
         if (!graphBuilder.getStopsMap().containsKey(originStopId)) {
