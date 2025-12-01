@@ -26,6 +26,7 @@ public class MainController {
     @FXML private Label routeInfoLabel;
     @FXML private Label stopsCountLabel;
     @FXML private Label distanceLabel;
+    @FXML private Label estimatedTimeLabel;
     @FXML private Label transfersLabel;
     @FXML private Label statusLabel;
     @FXML private Label connectionLabel;
@@ -254,18 +255,38 @@ public class MainController {
         routeInfoLabel.setText(originName + " → " + destName);
         stopsCountLabel.setText(String.valueOf(result.stops.length));
         distanceLabel.setText(String.format("%.2f km", result.totalDistance));
+        
+        // MOSTRAR TIEMPO ESTIMADO CALCULADO POR WORKERS
+        if (result.estimatedTime > 0) {
+            int hours = (int) (result.estimatedTime / 60);
+            int minutes = (int) (result.estimatedTime % 60);
+            if (hours > 0) {
+                estimatedTimeLabel.setText(String.format("%d h %d min", hours, minutes));
+            } else {
+                estimatedTimeLabel.setText(String.format("%.0f min", result.estimatedTime));
+            }
+        } else {
+            estimatedTimeLabel.setText("N/A");
+        }
+        
         transfersLabel.setText(String.valueOf(result.numTransfers));
         
-        // Actualizar lista de arcos con nombres completos
+        // Actualizar lista de arcos con nombres completos y velocidades
         ObservableList<String> arcsList = FXCollections.observableArrayList();
         for (int i = 0; i < result.arcs.length; i++) {
             Arc arc = result.arcs[i];
-            String arcText = String.format("[%d] %s → %s (%.3f km) - Ruta %s", 
+            String speedInfo = "";
+            if (arc.avgSpeed > 0) {
+                double timeMinutes = (arc.distance / arc.avgSpeed) * 60.0;
+                speedInfo = String.format(" | %.1f km/h (%.1f min)", arc.avgSpeed, timeMinutes);
+            }
+            String arcText = String.format("[%d] %s → %s | %.3f km | Ruta %s%s", 
                                           i + 1,
                                           arc.fromStop.longName,
                                           arc.toStop.longName,
                                           arc.distance,
-                                          arc.lineName);
+                                          arc.lineName,
+                                          speedInfo);
             arcsList.add(arcText);
         }
         arcsListView.setItems(arcsList);
