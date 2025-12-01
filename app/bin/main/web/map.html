@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa SITM-MIO</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .stop-marker {
+            background-color: #2196F3;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .stop-marker-start {
+            background-color: #4CAF50;
+            width: 16px;
+            height: 16px;
+        }
+        .stop-marker-end {
+            background-color: #F44336;
+            width: 16px;
+            height: 16px;
+        }
+        .leaflet-popup-content {
+            margin: 8px 12px;
+            font-size: 13px;
+        }
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+        }
+        .info-box {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            max-width: 250px;
+        }
+        .info-box h4 {
+            margin: 0 0 5px 0;
+            color: #2196F3;
+            font-size: 14px;
+        }
+        .info-box p {
+            margin: 3px 0;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // Inicializar mapa centrado en Cali, Colombia
+        var map = L.map('map').setView([3.4516, -76.5320], 12);
+        
+        // Capa base de OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+        
+        // Almacenar referencias
+        var markersLayer = L.layerGroup().addTo(map);
+        var arcsLayer = L.layerGroup().addTo(map);
+        var currentRoute = null;
+        
+        /**
+         * Limpia el mapa
+         */
+        function clearMap() {
+            markersLayer.clearLayers();
+            arcsLayer.clearLayers();
+        }
+        
+        /**
+         * Dibuja las paradas en el mapa
+         * @param stops Array de paradas con formato: [{stopId, lat, lng, shortName, longName}, ...]
+         */
+        function drawStops(stops) {
+            clearMap();
+            
+            if (!stops || stops.length === 0) {
+                return;
+            }
+            
+            var bounds = [];
+            
+            stops.forEach(function(stop, index) {
+                var lat = stop.lat;
+                var lng = stop.lng;
+                
+                // Crear icono personalizado
+                var iconClass = 'stop-marker';
+                if (index === 0) {
+                    iconClass += ' stop-marker-start';
+                } else if (index === stops.length - 1) {
+                    iconClass += ' stop-marker-end';
+                }
+                
+                var icon = L.divIcon({
+                    className: iconClass,
+                    iconSize: [12, 12]
+                });
+                
+                // Crear marcador
+                var marker = L.marker([lat, lng], {icon: icon}).addTo(markersLayer);
+                
+                // Popup con información
+                var popupContent = '<div class="info-box">' +
+                    '<h4>' + stop.shortName + '</h4>' +
+                    '<p><strong>ID:</strong> ' + stop.stopId + '</p>' +
+                    '<p><strong>Nombre:</strong> ' + stop.longName + '</p>' +
+                    '<p><strong>Coord:</strong> ' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '</p>' +
+                    '</div>';
+                
+                marker.bindPopup(popupContent);
+                
+                bounds.push([lat, lng]);
+            });
+            
+            // Ajustar vista a los bounds
+            if (bounds.length > 0) {
+                map.fitBounds(bounds, {padding: [50, 50]});
+            }
+        }
+        
+        /**
+         * Dibuja los arcos entre paradas
+         * @param arcs Array de arcos con formato: [{fromLat, fromLng, toLat, toLng, distance}, ...]
+         */
+        function drawArcs(arcs) {
+            if (!arcs || arcs.length === 0) {
+                return;
+            }
+            
+            arcs.forEach(function(arc) {
+                var latlngs = [
+                    [arc.fromLat, arc.fromLng],
+                    [arc.toLat, arc.toLng]
+                ];
+                
+                var polyline = L.polyline(latlngs, {
+                    color: '#2196F3',
+                    weight: 3,
+                    opacity: 0.7
+                }).addTo(arcsLayer);
+                
+                // Popup con información del arco
+                var popupContent = '<div class="info-box">' +
+                    '<h4>Arco</h4>' +
+                    '<p><strong>Distancia:</strong> ' + arc.distance.toFixed(3) + ' km</p>' +
+                    '<p><strong>Secuencia:</strong> ' + arc.sequence + '</p>' +
+                    '</div>';
+                
+                polyline.bindPopup(popupContent);
+            });
+        }
+        
+        /**
+         * Dibuja una ruta completa (paradas + arcos)
+         * @param routeData Objeto con stops y arcs
+         */
+        function drawRoute(routeData) {
+            drawStops(routeData.stops);
+            drawArcs(routeData.arcs);
+        }
+        
+        /**
+         * Centra el mapa en Cali
+         */
+        function centerOnCali() {
+            map.setView([3.4516, -76.5320], 12);
+        }
+    </script>
+</body>
+</html>

@@ -58,6 +58,7 @@ module mioice {
         StopList stops;         // Lista de paradas en orden
         ArcList arcs;           // Lista de arcos que conectan las paradas
         double totalDistance;   // Distancia total en km
+        double estimatedTime;   // Tiempo estimado en minutos (calculado por workers desde PostgreSQL)
         int numTransfers;       // Número de transbordos (cambios de línea)
         string message;         // Mensaje informativo (error o info)
     }

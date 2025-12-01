@@ -29,6 +29,8 @@ public class RouteResult implements java.lang.Cloneable,
 
     public double totalDistance;
 
+    public double estimatedTime;
+
     public int numTransfers;
 
     public String message;
@@ -38,12 +40,13 @@ public class RouteResult implements java.lang.Cloneable,
         this.message = "";
     }
 
-    public RouteResult(boolean found, Stop[] stops, Arc[] arcs, double totalDistance, int numTransfers, String message)
+    public RouteResult(boolean found, Stop[] stops, Arc[] arcs, double totalDistance, double estimatedTime, int numTransfers, String message)
     {
         this.found = found;
         this.stops = stops;
         this.arcs = arcs;
         this.totalDistance = totalDistance;
+        this.estimatedTime = estimatedTime;
         this.numTransfers = numTransfers;
         this.message = message;
     }
@@ -78,6 +81,10 @@ public class RouteResult implements java.lang.Cloneable,
             {
                 return false;
             }
+            if(this.estimatedTime != r.estimatedTime)
+            {
+                return false;
+            }
             if(this.numTransfers != r.numTransfers)
             {
                 return false;
@@ -104,6 +111,7 @@ public class RouteResult implements java.lang.Cloneable,
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, stops);
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, arcs);
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, totalDistance);
+        h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, estimatedTime);
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, numTransfers);
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, message);
         return h_;
@@ -129,6 +137,7 @@ public class RouteResult implements java.lang.Cloneable,
         StopListHelper.write(ostr, this.stops);
         ArcListHelper.write(ostr, this.arcs);
         ostr.writeDouble(this.totalDistance);
+        ostr.writeDouble(this.estimatedTime);
         ostr.writeInt(this.numTransfers);
         ostr.writeString(this.message);
     }
@@ -139,6 +148,7 @@ public class RouteResult implements java.lang.Cloneable,
         this.stops = StopListHelper.read(istr);
         this.arcs = ArcListHelper.read(istr);
         this.totalDistance = istr.readDouble();
+        this.estimatedTime = istr.readDouble();
         this.numTransfers = istr.readInt();
         this.message = istr.readString();
     }
@@ -196,5 +206,5 @@ public class RouteResult implements java.lang.Cloneable,
     private static final RouteResult _nullMarshalValue = new RouteResult();
 
     /** @hidden */
-    public static final long serialVersionUID = 1364425573L;
+    public static final long serialVersionUID = -7235408184787576475L;
 }

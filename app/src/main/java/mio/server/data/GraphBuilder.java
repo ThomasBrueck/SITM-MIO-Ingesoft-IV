@@ -3,11 +3,8 @@ package mio.server.data;
 import mioice.*;
 import mio.server.model.*;
 import mio.server.repository.*;
-import mio.server.data.CSVReader; // Explicit import if needed, though it's in same package? No, CSVReader is in mio.server.data, GraphBuilder is in mio.server.data. Wait.
-// GraphBuilder is in mio.server.data. CSVReader is in mio.server.data.
-// Repositories are in mio.server.repository.
+import mio.server.database.ArcStatsRepository;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -68,24 +65,13 @@ public class GraphBuilder {
         List<LineStopData> lineStops = lineStopRepository.findAll();
         buildArcs(lineStops);
 
+        // 4. Cargar velocidades calculadas previamente desde PostgreSQL (si existen)
+        loadArcSpeedsFromDatabase();
+
         System.out.println("Datos cargados exitosamente:");
         System.out.println("Rutas: " + String.format("%-51d", linesMap.size()));
         System.out.println("Paradas: " + String.format("%-49d", stopsMap.size()));
         System.out.println("Arcos totales: " + String.format("%-44d", allArcs.size()));
-    }
-    
-    /**
-     * Deprecated: Use loadData() without arguments after injecting repositories
-     */
-    @Deprecated
-    public void loadData(String linesPath, String stopsPath, String lineStopsPath) throws IOException {
-        // Adaptador para mantener compatibilidad si se llama al método antiguo
-        // pero idealmente debería usarse el nuevo flujo
-        System.out.println("WARNING: Usando método deprecated loadData(paths).");
-        this.stopRepository = mio.server.repository.RepositoryFactory.createStopRepository("CSV", stopsPath);
-        this.lineRepository = mio.server.repository.RepositoryFactory.createLineRepository("CSV", linesPath);
-        this.lineStopRepository = mio.server.repository.RepositoryFactory.createLineStopRepository("CSV", lineStopsPath);
-        loadData();
     }
 
     /**
@@ -320,5 +306,55 @@ public class GraphBuilder {
             stopsMap, 
             allArcs
         );
+    }
+    
+    /**
+     * Carga las velocidades promedio desde PostgreSQL para arcos existentes
+     * Permite evitar recálculo desde datagramas en ejecuciones posteriores
+     */
+    private void loadArcSpeedsFromDatabase() {
+        try {
+            ArcStatsRepository arcStatsRepo = new ArcStatsRepository();
+            
+            // Verificar si existen datos
+            if (!arcStatsRepo.hasData()) {
+                System.out.println("[DB] No hay velocidades previas, se calcularan en este análisis");
+                return;
+            }
+            
+            // Cargar todas las estadísticas
+            List<ArcStat> dbStats = arcStatsRepo.getAllArcStats();
+            int loadedCount = 0;
+            
+            // Crear índice de arcos para búsqueda rápida
+            Map<String, Arc> arcIndex = new HashMap<>();
+            for (Arc arc : allArcs) {
+                String key = arc.lineId + ":" + arc.orientation + ":" + arc.sequenceNum;
+                arcIndex.put(key, arc);
+            }
+            
+            // Aplicar velocidades desde BD
+            for (ArcStat stat : dbStats) {
+                String key = stat.lineId + ":" + stat.orientation + ":" + stat.sequenceNum;
+                Arc arc = arcIndex.get(key);
+                
+                if (arc != null && stat.sumTime > 0 && stat.count > 0) {
+                    // Calcular velocidad promedio
+                    double avgSpeedKmh = (stat.sumDistance / (stat.sumTime / 3600000.0));
+                    arc.avgSpeed = avgSpeedKmh;
+                    loadedCount++;
+                }
+            }
+            
+            if (loadedCount > 0) {
+                System.out.println("[DB] Cargadas " + loadedCount + " velocidades desde PostgreSQL");
+                ArcStatsRepository.GlobalStats globalStats = arcStatsRepo.getGlobalStats();
+                System.out.println("[DB] " + globalStats);
+            }
+            
+        } catch (Exception e) {
+            System.err.println("[DB] Error cargando velocidades desde base de datos: " + e.getMessage());
+            System.err.println("[DB] Se procederá sin datos previos");
+        }
     }
 }

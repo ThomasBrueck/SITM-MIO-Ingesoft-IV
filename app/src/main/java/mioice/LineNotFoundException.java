@@ -71,5 +71,5 @@ public class LineNotFoundException extends com.zeroc.Ice.UserException
     }
 
     /** @hidden */
-    public static final long serialVersionUID = -40500995L;
+    public static final long serialVersionUID = -1929052056726404867L;
 }

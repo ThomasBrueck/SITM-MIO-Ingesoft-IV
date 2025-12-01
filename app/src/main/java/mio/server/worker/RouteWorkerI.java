@@ -62,6 +62,47 @@ public class RouteWorkerI implements RouteWorker {
         List<Arc> arcs = (List<Arc>) searchResult.get("arcs");
         result.arcs = arcs.toArray(new Arc[0]);
         
+        // CALCULAR TIEMPO ESTIMADO usando velocidades de PostgreSQL
+        result.estimatedTime = calculateEstimatedTime(arcs);
+        
+        System.out.println("[Worker] Ruta calculada: " + result.totalDistance + " km, " + 
+                          String.format("%.2f", result.estimatedTime) + " minutos estimados");
+        
         return result;
+    }
+    
+    /**
+     * Calcula el tiempo estimado de viaje en minutos
+     * Usa las velocidades promedio (avgSpeed) que fueron cargadas desde PostgreSQL
+     * 
+     * @param arcs Lista de arcos de la ruta
+     * @return Tiempo estimado en minutos
+     */
+    private double calculateEstimatedTime(List<Arc> arcs) {
+        double totalTimeMinutes = 0.0;
+        int arcsWithSpeed = 0;
+        int arcsWithoutSpeed = 0;
+        
+        for (Arc arc : arcs) {
+            if (arc.avgSpeed > 0) {
+                // Usar velocidad precalculada desde PostgreSQL
+                // Tiempo = Distancia / Velocidad (en horas), convertir a minutos
+                double timeHours = arc.distance / arc.avgSpeed;
+                totalTimeMinutes += (timeHours * 60.0);
+                arcsWithSpeed++;
+            } else {
+                // Si no hay velocidad calculada, usar velocidad promedio conservadora de 15 km/h
+                double timeHours = arc.distance / 15.0;
+                totalTimeMinutes += (timeHours * 60.0);
+                arcsWithoutSpeed++;
+            }
+        }
+        
+        if (arcsWithoutSpeed > 0) {
+            System.out.println("[Worker] ⚠️ " + arcsWithoutSpeed + " arcos sin velocidad precalculada (usando 15 km/h)");
+        }
+        System.out.println("[Worker] ✓ " + arcsWithSpeed + " arcos con velocidad de PostgreSQL");
+        
+        return totalTimeMinutes;
     }
 }

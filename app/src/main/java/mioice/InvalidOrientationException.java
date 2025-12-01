@@ -71,5 +71,5 @@ public class InvalidOrientationException extends com.zeroc.Ice.UserException
     }
 
     /** @hidden */
-    public static final long serialVersionUID = 787333474L;
+    public static final long serialVersionUID = 1271522319989064034L;
 }

@@ -40,9 +40,73 @@ Esta aplicacion permite a los usuarios consultar rutas optimas entre paradas del
 
 ### Puertos de Red
 
-- Puerto 10000: Debe estar disponible para la comunicacion Ice entre servidor y cliente
+- **Puerto 10000**: Servidor Master (GraphService, RouteService)
+  - Debe estar disponible y accesible desde la red si usas workers remotos
+- **Puertos 10001-10004** (o más): Workers distribuidos
+  - Cada worker necesita un puerto único
+  - Si trabajas en red distribuida, asegúrate de que estos puertos estén abiertos en el firewall
 
 ## Instrucciones de Ejecucion
+
+### 0. Iniciar Workers (Distribución y Registro Dinámico)
+
+Para habilitar el análisis distribuido y la delegación de consultas de rutas, es necesario iniciar uno o más procesos Worker antes o después de iniciar el servidor. Cada Worker se registra automáticamente en el servidor Master para consultas de rutas.
+
+#### Opción A: Workers en la misma máquina (localhost)
+
+**Ejemplo: Iniciar 4 Workers en diferentes terminales (puertos 10001-10004):**
+
+```bash
+./gradlew runWorker --args='10001'
+./gradlew runWorker --args='10002'
+./gradlew runWorker --args='10003'
+./gradlew runWorker --args='10004'
+```
+
+#### Opción B: Workers en otras máquinas de la red (distribución real)
+
+Para ejecutar workers en **otros PCs** conectados a la red:
+
+> **📖 Guía Completa:** Para instrucciones detalladas paso a paso, consulta [CONFIGURACION_RED.md](CONFIGURACION_RED.md)
+
+**Resumen rápido:**
+
+**1. En el PC Master (servidor):**
+   - Obtén la IP del PC Master: `hostname -I` (Linux/macOS) o `ipconfig` (Windows)
+   - Ejemplo: `192.168.1.100`
+   - Asegúrate de que el firewall permita conexiones en el puerto 10000
+
+**2. En cada PC Worker:**
+   - Copia el proyecto completo o solo la carpeta `app/` con los datos
+   - Ejecuta el worker especificando el puerto, IP del worker (opcional) e IP del Master:
+
+```bash
+# Sintaxis: ./gradlew runWorker --args='<puerto> <worker_ip> <master_ip>'
+
+# Ejemplo: Worker en PC con IP 192.168.1.101, conectándose a Master en 192.168.1.100
+./gradlew runWorker --args='10001 192.168.1.101 192.168.1.100'
+
+# Si omites la IP del worker, se autodetecta automáticamente:
+./gradlew runWorker --args='10001 auto 192.168.1.100'
+
+# O simplemente:
+./gradlew runWorker --args='10001 0.0.0.0 192.168.1.100'
+```
+
+**3. Verificación:**
+   - El worker debe mostrar: `✓ Registrado exitosamente en el master para consultas de rutas`
+   - En el servidor debe aparecer: `MASTER: Worker agregado manualmente -> ...`
+
+**Notas importantes para red distribuida:**
+- Todos los PCs deben estar en la misma red local o tener conectividad IP
+- El Master escucha en `0.0.0.0:10000` (todas las interfaces)
+- Cada Worker debe usar un puerto único (ej: 10001, 10002, 10003, 10004)
+- Verifica que los firewalls permitan tráfico TCP en los puertos necesarios
+- Los Workers se pueden iniciar, detener o reiniciar en cualquier momento
+
+Cada Worker, al iniciar, se registra automáticamente en el Master (servidor) para participar en la resolución de rutas. Puedes iniciar o detener Workers en cualquier momento; el servidor usará dinámicamente los que estén disponibles.
+
+**Nota:** Si cambias los puertos, asegúrate de que no estén en uso y que el servidor y los workers estén configurados para comunicarse en la misma red/dirección.
 
 ### 1. Iniciar el Servidor
 
@@ -151,6 +215,37 @@ Para compilar el proyecto sin ejecutarlo:
 
 ## Solucion de Problemas Comunes
 
+### Configuración de Red y Firewall (para Workers remotos)
+
+Si estás ejecutando workers en otros PCs:
+
+**Linux (Ubuntu/Debian):**
+```bash
+# Permitir puerto 10000 (Master) y 10001-10004 (Workers)
+sudo ufw allow 10000/tcp
+sudo ufw allow 10001:10004/tcp
+```
+
+**Windows:**
+```powershell
+# Abrir puertos en Windows Firewall
+New-NetFirewallRule -DisplayName "MIO Master" -Direction Inbound -LocalPort 10000 -Protocol TCP -Action Allow
+New-NetFirewallRule -DisplayName "MIO Workers" -Direction Inbound -LocalPort 10001-10004 -Protocol TCP -Action Allow
+```
+
+**macOS:**
+```bash
+# macOS generalmente permite conexiones salientes, pero si usas firewall:
+# Preferencias del Sistema > Seguridad > Firewall > Opciones > Permitir Java
+```
+
+**Verificar conectividad entre PCs:**
+```bash
+# Desde un PC Worker, probar conexión al Master
+ping 192.168.1.100  # IP del Master
+telnet 192.168.1.100 10000  # Probar si el puerto 10000 está abierto
+```
+
 ### Error: "Port 10000 already in use"
 
 El puerto 10000 esta siendo usado por otro proceso. Opciones:
@@ -198,6 +293,48 @@ Verificar que los archivos CSV existen en `app/src/main/resources/data/`:
 - El puerto 10000 debe estar disponible para la comunicacion Ice.
 - La primera carga de datos puede tomar unos segundos.
 - En la primera ejecucion, Gradle descargara todas las dependencias automaticamente (requiere conexion a Internet).
+
+## Ejemplo de Despliegue Distribuido
+
+**Escenario:** 1 Master (PC1) + 3 Workers (PC2, PC3, PC4)
+
+**PC1 (Master) - IP: 192.168.1.100**
+```bash
+# 1. Abrir firewall
+sudo ufw allow 10000/tcp
+
+# 2. Iniciar servidor
+./gradlew runServer
+```
+
+**PC2 (Worker 1) - IP: 192.168.1.101**
+```bash
+# 1. Copiar proyecto o carpeta app/
+# 2. Abrir firewall
+sudo ufw allow 10001/tcp
+
+# 3. Iniciar worker
+./gradlew runWorker --args='10001 0.0.0.0 192.168.1.100'
+```
+
+**PC3 (Worker 2) - IP: 192.168.1.102**
+```bash
+sudo ufw allow 10002/tcp
+./gradlew runWorker --args='10002 0.0.0.0 192.168.1.100'
+```
+
+**PC4 (Worker 3) - IP: 192.168.1.103**
+```bash
+sudo ufw allow 10003/tcp
+./gradlew runWorker --args='10003 0.0.0.0 192.168.1.100'
+```
+
+**PC1 (Cliente visual) - Misma máquina que Master**
+```bash
+./gradlew runClient
+```
+
+El cliente ahora usará el Master que distribuirá las consultas entre los 3 Workers remotos.
 
 ## Autores
 

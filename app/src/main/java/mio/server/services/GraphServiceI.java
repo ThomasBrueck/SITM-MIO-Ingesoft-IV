@@ -14,20 +14,31 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class GraphServiceI implements GraphService {
     
     private GraphBuilder graphBuilder;
-    private List<RouteWorkerPrx> workers;
+    private List<RouteWorkerPrx> routeWorkers;
+    private List<String> workerProxies; // Lista de proxies completos de los workers
     private AtomicInteger nextWorkerIndex;
     
     public GraphServiceI(GraphBuilder graphBuilder) {
         this.graphBuilder = graphBuilder;
-        this.workers = new ArrayList<>();
+        this.routeWorkers = new ArrayList<>();
+        this.workerProxies = new ArrayList<>();
         this.nextWorkerIndex = new AtomicInteger(0);
     }
     
     public void addWorker(RouteWorkerPrx worker) {
-        synchronized(workers) {
-            workers.add(worker);
+        synchronized(routeWorkers) {
+            routeWorkers.add(worker);
         }
         System.out.println("MASTER: Worker agregado manualmente -> " + worker);
+    }
+    
+    /**
+     * Obtiene la lista de proxies de workers registrados para análisis
+     */
+    public List<String> getWorkerProxies() {
+        synchronized(workerProxies) {
+            return new ArrayList<>(workerProxies);
+        }
     }
     
     @Override
@@ -37,6 +48,13 @@ public class GraphServiceI implements GraphService {
             RouteWorkerPrx worker = RouteWorkerPrx.checkedCast(base);
             if (worker != null) {
                 addWorker(worker);
+                // Guardar también el proxy base para poder construir AnalysisWorkerPrx
+                synchronized(workerProxies) {
+                    if (!workerProxies.contains(proxy)) {
+                        workerProxies.add(proxy);
+                        System.out.println("MASTER: Worker proxy registrado para análisis: " + proxy);
+                    }
+                }
             }
         } catch (Exception e) {
             System.err.println("MASTER: Error registrando worker " + proxy + ": " + e.getMessage());
@@ -119,10 +137,10 @@ public class GraphServiceI implements GraphService {
     }
     
     private RouteWorkerPrx getNextWorker() {
-        synchronized(workers) {
-            if (workers.isEmpty()) return null;
-            int index = nextWorkerIndex.getAndIncrement() % workers.size();
-            return workers.get(index);
+        synchronized(routeWorkers) {
+            if (routeWorkers.isEmpty()) return null;
+            int index = nextWorkerIndex.getAndIncrement() % routeWorkers.size();
+            return routeWorkers.get(index);
         }
     }
     

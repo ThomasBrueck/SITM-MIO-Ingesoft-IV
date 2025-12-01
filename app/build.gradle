@@ -27,6 +27,12 @@ dependencies {
     // implementation 'org.openjfx:javafx-fxml:21'
     // implementation 'org.openjfx:javafx-web:21'
     
+    // PostgreSQL JDBC Driver
+    implementation 'org.postgresql:postgresql:42.7.1'
+    
+    // HikariCP - Connection Pool para mejor performance
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+    
     // CSV parsing (opcional, usamos parsing manual)
     // implementation 'com.opencsv:opencsv:5.9'
     

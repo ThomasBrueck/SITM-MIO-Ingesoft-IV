@@ -1,9 +1,0 @@
-
-> Task :app:compileSlice
-  Compilando archivos Slice...
-Archivos Slice compilados exitosamente
-
-> Task :app:compileJava
-
-BUILD SUCCESSFUL in 2s
-2 actionable tasks: 2 executed

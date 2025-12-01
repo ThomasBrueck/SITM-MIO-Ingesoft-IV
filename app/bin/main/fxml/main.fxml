@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.web.WebView?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="mio.ui.MainController" 
+            stylesheets="@../css/styles.css">
+    
+    <!-- Panel superior -->
+    <top>
+        <VBox styleClass="header-panel">
+            <HBox alignment="CENTER" spacing="20" styleClass="title-bar">
+                <Label text="SISTEMA DE GRAFOS SITM-MIO - Buscador de Rutas" styleClass="main-title"/>
+            </HBox>
+            
+            <HBox spacing="15" alignment="CENTER_LEFT" styleClass="control-panel">
+                <Label text="Origen:" styleClass="control-label"/>
+                <ComboBox fx:id="originComboBox" promptText="Seleccione parada de origen" 
+                          prefWidth="300" onAction="#onOriginSelected"/>
+                
+                <Label text="Destino:" styleClass="control-label"/>
+                <ComboBox fx:id="destComboBox" promptText="Seleccione parada de destino" 
+                          prefWidth="300" onAction="#onDestSelected" disable="true"/>
+                
+                <Button fx:id="findRouteButton" text="Buscar Ruta" onAction="#onFindRoute" 
+                        styleClass="primary-button" disable="true"/>
+                <Button fx:id="clearButton" text="Limpiar" onAction="#onClear" 
+                        styleClass="secondary-button"/>
+                <Button fx:id="statsButton" text="Estadísticas" onAction="#onShowStats" 
+                        styleClass="secondary-button"/>
+            </HBox>
+        </VBox>
+    </top>
+    
+    <!-- Panel central -->
+    <center>
+        <SplitPane dividerPositions="0.7">
+            
+            <!-- Mapa -->
+            <StackPane>
+                <WebView fx:id="mapWebView"/>
+            </StackPane>
+            
+            <!-- Panel lateral derecho -->
+            <VBox spacing="10" styleClass="side-panel">
+                <Label text="INFORMACIÓN DE LA RUTA" styleClass="section-title"/>
+                
+                <VBox spacing="5" styleClass="info-section">
+                    <Label text="Origen → Destino:" styleClass="info-label"/>
+                    <Label fx:id="routeInfoLabel" text="No seleccionado" 
+                           styleClass="info-value" wrapText="true"/>
+                </VBox>
+                
+                <VBox spacing="5" styleClass="info-section">
+                    <Label text="Paradas en Ruta:" styleClass="info-label"/>
+                    <Label fx:id="stopsCountLabel" text="0" styleClass="info-value"/>
+                </VBox>
+                
+                <VBox spacing="5" styleClass="info-section">
+                    <Label text="Distancia Total:" styleClass="info-label"/>
+                    <Label fx:id="distanceLabel" text="0.00 km" styleClass="info-value"/>
+                </VBox>
+                
+                <VBox spacing="5" styleClass="info-section">
+                    <Label text="Transbordos:" styleClass="info-label"/>
+                    <Label fx:id="transfersLabel" text="0" styleClass="info-value"/>
+                </VBox>
+                
+                <Separator/>
+                
+                <Label text="RECORRIDO DETALLADO" styleClass="section-title"/>
+                
+                <ListView fx:id="arcsListView" VBox.vgrow="ALWAYS" 
+                          styleClass="arcs-list"/>
+            </VBox>
+        </SplitPane>
+    </center>
+    
+    <!-- Panel inferior -->
+    <bottom>
+        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="status-bar">
+            <Label text="Estado:" styleClass="status-label"/>
+            <Label fx:id="statusLabel" text="Listo" styleClass="status-value"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="connectionLabel" text="● Conectado al servidor" 
+                   styleClass="connection-status"/>
+        </HBox>
+    </bottom>
+    
+</BorderPane>

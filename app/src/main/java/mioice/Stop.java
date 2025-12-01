@@ -220,5 +220,5 @@ public class Stop implements java.lang.Cloneable,
     private static final Stop _nullMarshalValue = new Stop();
 
     /** @hidden */
-    public static final long serialVersionUID = 551487180L;
+    public static final long serialVersionUID = 4959008810046785228L;
 }
