@@ -137,16 +137,16 @@ public class MioServer {
 
             // --- LÓGICA DE ANÁLISIS DISTRIBUIDO (Requerimiento D) ---
             System.out.println("\n--- ESPERANDO WORKERS PARA ANÁLISIS ---");
-            System.out.println("El servidor esperará hasta 30 segundos para que los workers se registren...");
+            System.out.println("El servidor esperará hasta 2 minutos para que los workers se registren...");
             
-            // Esperar hasta 30 segundos verificando cada 5 segundos
+            // Esperar hasta 2 minutos verificando cada 10 segundos
             List<AnalysisWorkerPrx> workers = new java.util.ArrayList<>();
-            int maxAttempts = 6; // 6 intentos x 5 segundos = 30 segundos
+            int maxAttempts = 12; // 12 intentos x 10 segundos = 120 segundos (2 minutos)
             int attempt = 0;
             
             while (workers.isEmpty() && attempt < maxAttempts) {
                 attempt++;
-                Thread.sleep(5000); // Esperar 5 segundos
+                Thread.sleep(10000); // Esperar 10 segundos
                 
                 System.out.println("Verificando workers registrados (intento " + attempt + "/" + maxAttempts + ")...");
                 
@@ -177,7 +177,7 @@ public class MioServer {
             System.out.println("\n--- INICIANDO ANÁLISIS DE DATAGRAMAS ---");
 
             if (workers.isEmpty()) {
-                System.out.println("⚠️ No se detectaron workers después de 30 segundos.");
+                System.out.println("⚠️ No se detectaron workers después de 2 minutos.");
                 System.out.println("ℹ️ El servidor continuará en modo consulta (sin análisis de datagramas).");
                 System.out.println("ℹ️ Puede ejecutar workers en cualquier momento para análisis posteriores.\n");
                 
