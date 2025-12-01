@@ -206,5 +206,5 @@ public class RouteResult implements java.lang.Cloneable,
     private static final RouteResult _nullMarshalValue = new RouteResult();
 
     /** @hidden */
-    public static final long serialVersionUID = -7235408184787576475L;
+    public static final long serialVersionUID = 1019763045L;
 }

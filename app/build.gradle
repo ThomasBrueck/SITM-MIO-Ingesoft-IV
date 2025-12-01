@@ -160,10 +160,17 @@ task runTestClient(type: JavaExec) {
     group = 'application'
     
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'mio.client.TestClient'
+    mainClass = 'mio.client.MioGraphClient'
+}
+
+task runBenchmark(type: JavaExec) {
+    group = 'application'
+    description = 'Run the Benchmark Client'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'mio.client.BenchmarkClient'
     workingDir = project.rootDir
     
     doFirst {
-        println '\nIniciando TestClient...\n'
+        println '\nIniciando Benchmark Client...\n'
     }
 }

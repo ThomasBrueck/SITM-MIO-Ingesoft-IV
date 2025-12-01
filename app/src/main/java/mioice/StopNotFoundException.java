@@ -71,5 +71,5 @@ public class StopNotFoundException extends com.zeroc.Ice.UserException
     }
 
     /** @hidden */
-    public static final long serialVersionUID = -6728280436792943747L;
+    public static final long serialVersionUID = 935271293L;
 }

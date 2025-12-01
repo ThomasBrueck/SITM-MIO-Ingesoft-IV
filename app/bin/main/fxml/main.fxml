@@ -65,6 +65,11 @@
                 </VBox>
                 
                 <VBox spacing="5" styleClass="info-section">
+                    <Label text="Tiempo Estimado:" styleClass="info-label"/>
+                    <Label fx:id="estimatedTimeLabel" text="0 min" styleClass="info-value" style="-fx-text-fill: #FF5722; -fx-font-weight: bold;"/>
+                </VBox>
+                
+                <VBox spacing="5" styleClass="info-section">
                     <Label text="Transbordos:" styleClass="info-label"/>
                     <Label fx:id="transfersLabel" text="0" styleClass="info-value"/>
                 </VBox>

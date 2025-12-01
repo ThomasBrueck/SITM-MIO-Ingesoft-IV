@@ -194,5 +194,5 @@ public class Line implements java.lang.Cloneable,
     private static final Line _nullMarshalValue = new Line();
 
     /** @hidden */
-    public static final long serialVersionUID = 2763227474759459922L;
+    public static final long serialVersionUID = -2103237550L;
 }
